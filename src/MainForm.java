@@ -117,7 +117,7 @@ public class MainForm {
         resultButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String request = "";
+                /*String request = "";
                 String store = "";
                 String price = "";
                 priceData = new Object[priceDefaultTableModel.getRowCount()][priceDefaultTableModel.getColumnCount()];
@@ -148,7 +148,9 @@ public class MainForm {
                 }
 
                 resultPane.setText("Запрос: " + request+"\n" + "Склад: "+ store + "\n" +
-                "Цены: \n" + price);
+                "Цены: \n" + price);*/
+                new TransportationProblem();
+                resultPane.setText(new TransportationProblem().getResult());
 
 
             }

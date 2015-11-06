@@ -9,10 +9,11 @@ public class TransportationProblem {
     private static Integer[] supply;
     private static Double[][] costs;
     private static Shipment[][] matrix;
+    String result = "";
 
     private static class Shipment {
         final double costPerUnit;
-        final int r, c; // координаты товара
+        final int r, c;
         double quantity;
 
         public Shipment(double q, double cpu, int r, int c) {
@@ -70,12 +71,14 @@ public class TransportationProblem {
                     }
                 }
             }
+        result += "\n\nNorth West result:\n\n"+ printResult();
     }
 
     public void steppingStone() {
         double maxReduction = 0;
         Shipment[] move = null;
         Shipment leaving = null;
+        int counter = 0;
 
         fixDegenerateCase();
 
@@ -92,6 +95,7 @@ public class TransportationProblem {
                 double lowestQuantity = Integer.MAX_VALUE;
                 Shipment leavingCandidate = null;
 
+                // прибавлениве вычитание минимального элемента из пути
                 boolean plus = true;
                 for (Shipment s : path) {
                     if (plus) {
@@ -121,6 +125,7 @@ public class TransportationProblem {
                 matrix[s.r][s.c] = s.quantity == 0 ? null : s;
                 plus = !plus;
             }
+            result += "\n\nIntermediate result: "+"\n\n"+ printResult();
             steppingStone();
         }
     }
@@ -132,12 +137,12 @@ public class TransportationProblem {
                 .collect(toCollection(LinkedList::new));
     }
 
+    // строим цикл
     static Shipment[] getClosedPath(Shipment s) {
         LinkedList<Shipment> path = matrixToList();
         path.addFirst(s);
 
-        // remove (and keep removing) elements that do not have a
-        // vertical AND horizontal neighbor
+        //Удаляем из пути элементы у которых нет соседей
         while (path.removeIf(e -> {
             Shipment[] nbrs = getNeighbors(e, path);
             return nbrs[0] == null || nbrs[1] == null;
@@ -168,6 +173,7 @@ public class TransportationProblem {
         return nbrs;
     }
 
+    //Решаем проблемму
     static void fixDegenerateCase() {
         final double eps = Double.MIN_VALUE;
 
@@ -188,8 +194,6 @@ public class TransportationProblem {
 
     public String printResult() {
         String result = "";
-        System.out.printf("Optimal solution %n%n");
-        result += "Optimal solution\n\n";
 
         double totalCosts = 0;
 
@@ -199,17 +203,13 @@ public class TransportationProblem {
                 Shipment s = matrix[r][c];
                 if (s != null && s.r == r && s.c == c) {
                     result += " " + s.quantity + " ";
-                    System.out.printf(" %3s ", (int) s.quantity);
                     totalCosts += (s.quantity * s.costPerUnit);
                 } else
                     result += " - ";
-                    System.out.printf("  -  ");
             }
             result += "\n";
-            System.out.println();
         }
         result += "\n Total costs: " + totalCosts + "\n\n";
-        System.out.printf("%nTotal costs: %s%n%n", totalCosts);
         return result;
     }
 
@@ -258,5 +258,10 @@ public class TransportationProblem {
     public Double[][] getCosts()
     {
         return costs;
+    }
+
+    public String getResult()
+    {
+        return result;
     }
 }

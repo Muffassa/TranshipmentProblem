@@ -27,7 +27,6 @@ public class MainForm {
     private JButton resultButton;
     private JComboBox requestComboBox;
     private JComboBox storeComboBox;
-    private JLabel testLable;
     private TableModel requestTableModel;
     private TableModel storeTableModel;
     private TableModel priceTableModel;
@@ -150,7 +149,7 @@ public class MainForm {
                 tp.init();
                 tp.northWestCornerRule();
                 tp.steppingStone();
-                resultPane.setText(tp.printResult());
+                resultPane.setText(tp.getResult() + "\n\nOptimal solution:\n\n"+ tp.printResult());
 
             }
         });

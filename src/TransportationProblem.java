@@ -5,14 +5,14 @@ import static java.util.stream.Collectors.toCollection;
 
 public class TransportationProblem {
 
-    private static int[] demand;
-    private static int[] supply;
-    private static double[][] costs;
+    private static Integer[] demand;
+    private static Integer[] supply;
+    private static Double[][] costs;
     private static Shipment[][] matrix;
 
     private static class Shipment {
         final double costPerUnit;
-        final int r, c;
+        final int r, c; // координаты товара
         double quantity;
 
         public Shipment(double q, double cpu, int r, int c) {
@@ -23,62 +23,56 @@ public class TransportationProblem {
         }
     }
 
-    static void init(String filename) throws Exception {
+    public void init(){
+        String[] _demand = MainForm.getRequestData();
+        String[] _supply = MainForm.getStoreData();
+        String[][] _costs =MainForm.getPriceData();
 
-        try (Scanner sc = new Scanner(new File(filename))) {
-            int numSources = sc.nextInt();
-            int numDestinations = sc.nextInt();
+        demand = new Integer[_demand.length];
+        for (int i = 0; i < _demand.length ; i++) {
 
-            List<Integer> src = new ArrayList<>();
-            List<Integer> dst = new ArrayList<>();
-
-            for (int i = 0; i < numSources; i++)
-                src.add(sc.nextInt());
-
-            for (int i = 0; i < numDestinations; i++)
-                dst.add(sc.nextInt());
-
-            // fix imbalance
-            int totalSrc = src.stream().mapToInt(i -> i).sum();
-            int totalDst = dst.stream().mapToInt(i -> i).sum();
-            if (totalSrc > totalDst)
-                dst.add(totalSrc - totalDst);
-            else if (totalDst > totalSrc)
-                src.add(totalDst - totalSrc);
-
-            supply = src.stream().mapToInt(i -> i).toArray();
-            demand = dst.stream().mapToInt(i -> i).toArray();
-
-            costs = new double[supply.length][demand.length];
-            matrix = new Shipment[supply.length][demand.length];
-
-            for (int i = 0; i < numSources; i++)
-                for (int j = 0; j < numDestinations; j++)
-                    costs[i][j] = sc.nextDouble();
+            demand[i] = Integer.parseInt(_demand[i]);
         }
+
+        supply = new Integer[_supply.length];
+        for (int i = 0; i < _supply.length; i++)
+        {
+            supply[i] = Integer.parseInt(_supply[i]);
+        }
+
+        costs = new Double[_costs.length][_costs[0].length];
+        for (int i = 0; i < _costs.length ; i++) {
+            for (int j = 0; j < _costs[i].length; j++)
+            {
+
+                costs[i][j] = Double.parseDouble(_costs[i][j]);
+            }
+        }
+
+
     }
 
-    static void northWestCornerRule() {
-
+    public void northWestCornerRule() {
+        matrix = new Shipment[supply.length][demand.length]; //создаем матрицу заказов размером запасы * потребности
         for (int r = 0, northwest = 0; r < supply.length; r++)
             for (int c = northwest; c < demand.length; c++) {
 
-                int quantity = Math.min(supply[r], demand[c]);
+                int quantity = Math.min(supply[r], demand[c]); // в количество записываем наименьшее значение из потребности и запасов
                 if (quantity > 0) {
-                    matrix[r][c] = new Shipment(quantity, costs[r][c], r, c);
+                    matrix[r][c] = new Shipment(quantity, costs[r][c], r, c); // записываем в элемент матрицы количество товара на поставку, цену и координаты
 
                     supply[r] -= quantity;
                     demand[c] -= quantity;
 
                     if (supply[r] == 0) {
-                        northwest = c;
+                        northwest = c; // если запасы заканчивются то останавливаемся
                         break;
                     }
                 }
             }
     }
 
-    static void steppingStone() {
+    public void steppingStone() {
         double maxReduction = 0;
         Shipment[] move = null;
         Shipment leaving = null;
@@ -192,8 +186,11 @@ public class TransportationProblem {
         }
     }
 
-    static void printResult(String filename) {
-        System.out.printf("Optimal solution %s%n%n", filename);
+    public String printResult() {
+        String result = "";
+        System.out.printf("Optimal solution %n%n");
+        result += "Optimal solution\n\n";
+
         double totalCosts = 0;
 
         for (int r = 0; r < supply.length; r++) {
@@ -201,24 +198,65 @@ public class TransportationProblem {
 
                 Shipment s = matrix[r][c];
                 if (s != null && s.r == r && s.c == c) {
+                    result += " " + s.quantity + " ";
                     System.out.printf(" %3s ", (int) s.quantity);
                     totalCosts += (s.quantity * s.costPerUnit);
                 } else
+                    result += " - ";
                     System.out.printf("  -  ");
             }
+            result += "\n";
             System.out.println();
         }
+        result += "\n Total costs: " + totalCosts + "\n\n";
         System.out.printf("%nTotal costs: %s%n%n", totalCosts);
+        return result;
     }
 
-    public static void main(String[] args) throws Exception {
-
-        for (String filename : new String[]{"input1.txt", "input2.txt",
-            "input3.txt"}) {
-            init(filename);
-            northWestCornerRule();
-            steppingStone();
-            printResult(filename);
+    public  String result()
+    {
+        String result = "";
+        result += "Запрос:\n";
+        for (int i = 0; i < demand.length ; i++) {
+            result +=" "+demand[i]+" ";
         }
+        result += "\n Потребность:\n";
+        for (int i = 0; i < supply.length ; i++) {
+            result += " "+supply[i]+" ";
+        }
+        result += "\nЦены:\n";
+        for (int i = 0; i < costs.length ; i++) {
+            for (int j = 0; j < costs[i].length ; j++) {
+                result += " "+ costs[i][j]+" ";
+            }
+            result += "\n";
+        }
+        return result;
+    }
+
+    public TransportationProblem() {
+        demand = new Integer[0];
+        supply = new Integer[0];
+        costs = new Double[0][];
+        matrix = new Shipment[0][];
+            /*northWestCornerRule();
+            steppingStone();
+            printResult();*/
+
+    }
+
+    public Integer[] getDemand()
+    {
+        return demand;
+    }
+
+    public Integer[] getSuply()
+    {
+        return supply;
+    }
+
+    public Double[][] getCosts()
+    {
+        return costs;
     }
 }

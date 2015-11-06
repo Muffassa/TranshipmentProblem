@@ -34,12 +34,14 @@ public class MainForm {
     private DefaultTableModel storeDefaultTableModel;
     private DefaultTableModel requestDefaultTableModel;
     private DefaultTableModel priceDefaultTableModel;
-    private Object[] requestData;
-    private Object[] storeData;
-    private Object[][] priceData;
+    private static String[] requestData;
+    private static String[] storeData;
+    private static String[][] priceData;
+    TransportationProblem tp;
 
     MainForm()
     {
+        tp = new TransportationProblem();
         ///Отрисовка окна
         JFrame jFrame = new JFrame("Transhipment Problem");
 
@@ -48,21 +50,21 @@ public class MainForm {
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         //Таблица запросов
-        requestData = new Object[0];
+        requestData = new String[0];
         requestDefaultTableModel = new DefaultTableModel(0,0);
-        requestDefaultTableModel.setColumnIdentifiers(new String[]{"ID", "Потребность"});
+        requestDefaultTableModel.setColumnIdentifiers(new String[]{"Потребность"});
         requestTable.setModel(requestDefaultTableModel);
         requestTableModel = requestTable.getModel();
 
         //Таблица поставщиков
-        storeData = new Object[0];
+        storeData = new String[0];
         storeDefaultTableModel = new DefaultTableModel(0,0);
-        storeDefaultTableModel.setColumnIdentifiers(new String[]{"ID", "Запас"});
+        storeDefaultTableModel.setColumnIdentifiers(new String[]{"Запас"});
         storeTable.setModel(storeDefaultTableModel);
         storeTableModel = storeTable.getModel();
 
         //Таблица цен
-        priceData = new Object[10][10];
+        priceData = new String[0][0];
         priceDefaultTableModel = new DefaultTableModel(storeDefaultTableModel.getRowCount(), requestDefaultTableModel.getRowCount());
         priceTable.setModel(priceDefaultTableModel);
         priceTableModel = priceTable.getModel();
@@ -74,9 +76,9 @@ public class MainForm {
         requestTableModel.addTableModelListener(new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent e) {
-                requestData = new Object[requestDefaultTableModel.getRowCount()];
+                requestData = new String[requestDefaultTableModel.getRowCount()];
                 for (int i = 0; i < requestDefaultTableModel.getRowCount(); i++) {
-                    requestData[i] = requestDefaultTableModel.getValueAt(i, 1);
+                    requestData[i] = (String)requestDefaultTableModel.getValueAt(i, 0);
                 }
             }
         });
@@ -105,9 +107,9 @@ public class MainForm {
          storeTableModel.addTableModelListener(new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent e) {
-                storeData = new Object[storeDefaultTableModel.getRowCount()];
+                storeData = new String[storeDefaultTableModel.getRowCount()];
                 for (int i = 0; i < storeDefaultTableModel.getRowCount(); i++) {
-                    storeData[i] = storeDefaultTableModel.getValueAt(i, 1);
+                    storeData[i] = (String)storeDefaultTableModel.getValueAt(i, 0);
                 }
             }
         });
@@ -117,41 +119,38 @@ public class MainForm {
         resultButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                /*String request = "";
-                String store = "";
-                String price = "";
-                priceData = new Object[priceDefaultTableModel.getRowCount()][priceDefaultTableModel.getColumnCount()];
-                for(int i = 0; i < priceDefaultTableModel.getRowCount(); i++)
-                {
-                    for(int j = 0; j < priceDefaultTableModel.getColumnCount(); j++)
-                    {
-                        priceData[i][j] = priceDefaultTableModel.getValueAt(i, j);
+                //Инициализация стоимости
+                priceData = new String[priceDefaultTableModel.getRowCount()][priceDefaultTableModel.getColumnCount()];
+                for (int i = 0; i < priceDefaultTableModel.getRowCount() ; i++) {
+                    for (int j = 0; j < priceDefaultTableModel.getColumnCount() ; j++) {
+                        priceData[i][j] = (String)priceDefaultTableModel.getValueAt(i, j);
                     }
                 }
 
-                for (int i = 0; i <requestData.length ; i++) {
-                    request += " " + requestData[i];
-                }
 
+               /* String result = "";
+
+                result += "Запрос:\n";
+                for (int i = 0; i < requestData.length ; i++) {
+                    result += " " + requestData[i] + " ";
+                }
+                result += "\nЗапас:\n";
                 for (int i = 0; i < storeData.length; i++)
                 {
-                    store += " " + storeData[i];
+                    result += " "+ storeData[i] + " ";
                 }
+                result += "\nСтоимость\n";
 
-                for(int i = 0; i < priceData.length; i++)
-                {
-                    for(int j = 0; j < priceData[i].length; j++)
-                    {
-                        price += " " + priceData[i][j];
+                for (int i = 0; i < priceData.length ; i++) {
+                    for (int j = 0; j < priceData[i].length; j++) {
+                        result += priceData[i][j];
                     }
-                    price += "\n";
-                }
-
-                resultPane.setText("Запрос: " + request+"\n" + "Склад: "+ store + "\n" +
-                "Цены: \n" + price);*/
-                new TransportationProblem();
-                resultPane.setText(new TransportationProblem().getResult());
-
+                    result += "\n";
+                }*/
+                tp.init();
+                tp.northWestCornerRule();
+                tp.steppingStone();
+                resultPane.setText(tp.printResult());
 
             }
         });
@@ -171,17 +170,17 @@ public class MainForm {
         });
     }
 
-    public Object[][] getPriceData()
+    public static String[][] getPriceData()
     {
         return priceData;
     }
 
-    public Object[] getRequestData()
+    public static String[] getRequestData()
     {
         return requestData;
     }
 
-    public Object[] getStoreData()
+    public static String[] getStoreData()
     {
         return storeData;
     }

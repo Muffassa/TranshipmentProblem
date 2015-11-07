@@ -3,7 +3,7 @@ import static java.util.Arrays.stream;
 
 public class TransportationProblem {
 
-    private static ArrayList<Shipment> basicShipments;
+    private static LinkedList<Shipment> basicShipments;
     private static Integer[] demand = {150, 130, 150, 140};
     private static Integer[] supply = {200, 180, 190};
     private static Integer[][] costs = {
@@ -18,7 +18,7 @@ public class TransportationProblem {
     private static class Shipment {
         final Integer costPerUnit;
         final Integer rowID, columnID;
-        Integer quantity;
+        private Integer quantity;
         private Integer potential;
         public boolean isBasic;
 
@@ -37,6 +37,16 @@ public class TransportationProblem {
 
         public void setPotential(Integer potential) {
             this.potential = potential;
+        }
+
+        public void setQuantity(Integer quantity)
+        {
+            this.quantity = quantity;
+        }
+
+        public Integer getQuantity()
+        {
+            return quantity;
         }
     }
 
@@ -113,13 +123,14 @@ public class TransportationProblem {
         }
     }
 
+
     public static boolean isOptimal()
     {
         Integer[] u = new Integer[supply.length];
         Integer[] v = new Integer[demand.length];
 
         //Составляем массив из базисных элементов
-        basicShipments = new ArrayList<Shipment>();
+        basicShipments = new LinkedList<Shipment>();
         for (int i = 0; i <matrix.length ; i++) {
             for (int j = 0; j <matrix[i].length ; j++) {
                 if(matrix[i][j].isBasic)
@@ -173,9 +184,67 @@ public class TransportationProblem {
         }
     }
 
+    private static Shipment[] getClosePath()
+    {
+        LinkedList<Shipment> path = new LinkedList<>(basicShipments);
+        path.addFirst(lowestPotencialShipment);
+
+        //выкидываем элементы которые не имеют соседей по вертикали или горизонтали
+        while (path.removeIf(e -> {
+            Shipment[] nbrs = getNeighbors(e, path);
+            return nbrs[0] == null || nbrs[1] == null;
+        }));
+
+        // place the remaining elements in the correct plus-minus order
+        Shipment[] stones = path.toArray(new Shipment[path.size()]);
+        Shipment prev = lowestPotencialShipment;
+        for (int i = 0; i < stones.length; i++) {
+            stones[i] = prev;
+            prev = getNeighbors(prev, path)[i % 2];
+        }
+        return stones;
+    }
+
+    static Shipment[] getNeighbors(Shipment s, LinkedList<Shipment> lst) {
+        Shipment[] nbrs = new Shipment[2];
+        for (Shipment o : lst) {
+            if (o != s) {
+                if (o.rowID == s.rowID && nbrs[0] == null)
+                    nbrs[0] = o;
+                else if (o.columnID == s.columnID && nbrs[1] == null)
+                    nbrs[1] = o;
+                if (nbrs[0] != null && nbrs[1] != null)
+                    break;
+            }
+
+        }
+        return nbrs;
+    }
+
+    //составляем масив из бахи
+
     private static void optimize()
     {
-        
+
+        //ищем наименьшее количество товара для оптимизации
+        int lowestQuantity = 999;
+        Shipment[] path = getClosePath();
+        for (int i = 1; i < path.length ; i++) {
+            if (path[i].quantity < lowestQuantity)
+            {
+                lowestQuantity = path[i].quantity;
+            }
+        }
+
+        //Оптимизируем цикл
+        boolean sign = true;
+        for (int i = 0; i < path.length ; i++) {
+            if(sign) {
+                matrix[path[i].rowID][path[i].columnID].setQuantity(matrix[path[i].rowID][path[i].columnID].getQuantity()+lowestQuantity);
+            }
+            else matrix[path[i].rowID][path[i].columnID].setQuantity(matrix[path[i].rowID][path[i].columnID].getQuantity()-lowestQuantity);
+            sign = !sign;
+        }
     }
 
     public Integer[] getDemand() {
@@ -197,11 +266,15 @@ public class TransportationProblem {
     public static void main(String[] args) {
         matrix = new Shipment[supply.length][demand.length];
         northWest();
-        System.out.print(printResult());
-        while (!isOptimal())
-        {
-            optimize();
-        }
+        System.out.println(printResult());
+        isOptimal();
+        optimize();
+        System.out.println(printResult());
+        isOptimal();
+        optimize();
+        System.out.println(printResult());
+
+
 
     }
 

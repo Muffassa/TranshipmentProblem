@@ -130,25 +130,25 @@ public class MainForm {
                /* String result = "";
 
                 result += "Запрос:\n";
-                for (int i = 0; i < requestData.length ; i++) {
-                    result += " " + requestData[i] + " ";
+                for (int rowID = 0; rowID < requestData.length ; rowID++) {
+                    result += " " + requestData[rowID] + " ";
                 }
                 result += "\nЗапас:\n";
-                for (int i = 0; i < storeData.length; i++)
+                for (int rowID = 0; rowID < storeData.length; rowID++)
                 {
-                    result += " "+ storeData[i] + " ";
+                    result += " "+ storeData[rowID] + " ";
                 }
                 result += "\nСтоимость\n";
 
-                for (int i = 0; i < priceData.length ; i++) {
-                    for (int j = 0; j < priceData[i].length; j++) {
-                        result += priceData[i][j];
+                for (int rowID = 0; rowID < priceData.length ; rowID++) {
+                    for (int columnID = 0; columnID < priceData[rowID].length; columnID++) {
+                        result += priceData[rowID][columnID];
                     }
                     result += "\n";
                 }*/
                 tp.init();
-                tp.northWestCornerRule();
-                tp.steppingStone();
+                /*tp.northWestCornerRule();
+                tp.steppingStone();*/
                 resultPane.setText(tp.getResult() + "\n\nOptimal solution:\n\n"+ tp.printResult());
 
             }

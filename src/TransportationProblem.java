@@ -1,9 +1,9 @@
 import java.util.*;
 import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toCollection;
 
 public class TransportationProblem {
 
-    private static LinkedList<Shipment> basicShipments;
     private static Integer[] demand = {150, 130, 150, 140};
     private static Integer[] supply = {200, 180, 190};
     private static Integer[][] costs = {
@@ -20,19 +20,12 @@ public class TransportationProblem {
         final Integer rowID, columnID;
         private Integer quantity;
         private Integer potential;
-        public boolean isBasic;
 
         public Shipment(Integer q, Integer cpu, Integer rowID, Integer columnID) {
             quantity = q;
             costPerUnit = cpu;
             this.rowID = rowID;
             this.columnID = columnID;
-
-            if(quantity != 0)
-            {
-                isBasic = true;
-            }
-            else isBasic = false;
         }
 
         public void setPotential(Integer potential) {
@@ -48,6 +41,7 @@ public class TransportationProblem {
         {
             return quantity;
         }
+
     }
 
     public void init() {
@@ -78,6 +72,7 @@ public class TransportationProblem {
     }
 
 
+
     public static String printResult() {
         String result = "";
 
@@ -99,15 +94,45 @@ public class TransportationProblem {
         return result;
     }
 
+
+
+    static void fixDegenerateCase() {
+        final int eps = Integer.MIN_VALUE;
+
+        if (supply.length + demand.length - 1 != matrix.length) {
+
+            for (int r = 0; r < supply.length; r++)
+                for (int c = 0; c < demand.length; c++) {
+                    if (matrix[r][c] == null) {
+                        Shipment dummy = new Shipment(eps, costs[r][c], r, c);
+                        LinkedList<Shipment> _dummy = new LinkedList<>();
+                        _dummy.add(dummy);
+                        if (getClosePath(_dummy).length == 0) {
+                            matrix[r][c] = dummy;
+                            return;
+                        }
+                    }
+                }
+        }
+    }
+
+
     public TransportationProblem() {
         demand = new Integer[0];
         supply = new Integer[0];
         costs = new Integer[0][];
         matrix = new Shipment[0][];
-            /*northWestCornerRule();
-            steppingStone();
-            printResult();*/
-
+            init();
+        lowestPotencialShipment = new Shipment(0,0,0,0);
+        lowestPotencialShipment.setPotential(-999);
+        matrix = new Shipment[supply.length][demand.length];
+        northWest();
+        result += printResult();
+        while (lowestPotencialShipment.potential < 0)
+        {
+            optimize();
+            result += printResult();
+        }
     }
 
     public static void northWest()
@@ -124,50 +149,7 @@ public class TransportationProblem {
     }
 
 
-    public static boolean isOptimal()
-    {
-        Integer[] u = new Integer[supply.length];
-        Integer[] v = new Integer[demand.length];
 
-        //Составляем массив из базисных элементов
-        basicShipments = new LinkedList<Shipment>();
-        for (int i = 0; i <matrix.length ; i++) {
-            for (int j = 0; j <matrix[i].length ; j++) {
-                if(matrix[i][j].isBasic)
-                {
-                    basicShipments.add(matrix[i][j]);
-                }
-            }
-        }
-
-        //считаем u и v для каждой базисной точки
-        u[0] = 0;
-        for (int i = 0; i < basicShipments.size() ; i++) {
-            Shipment c = basicShipments.get(i);
-            if(v[c.columnID] == null)
-            {
-                v[c.columnID] = c.costPerUnit - u[c.rowID];
-            }
-            else if(u[c.rowID] == null)
-            {
-                u[c.rowID] = c.costPerUnit - v[c.columnID];
-            }
-        }
-
-        //считаем потенциал для всех точек
-        for (int i = 0; i < matrix.length ; i++) {
-            for (int j = 0; j < matrix[i].length ; j++) {
-                matrix[i][j].setPotential(matrix[i][j].costPerUnit - u[matrix[i][j].rowID] - v[matrix[i][j].columnID]);
-            }
-        }
-
-        lowestPotential();
-        if(lowestPotencialShipment.potential < 0)
-        {
-            return false;
-        }
-        return true;
-    }
 
     //Функция возращает элемент с наименьшим потенциалом
     public static void lowestPotential()
@@ -184,9 +166,10 @@ public class TransportationProblem {
         }
     }
 
-    private static Shipment[] getClosePath()
+    //Ищем путь
+    private static Shipment[] getClosePath(LinkedList<Shipment> basicShipments)
     {
-        LinkedList<Shipment> path = new LinkedList<>(basicShipments);
+        LinkedList<Shipment> path = basicShipments;
         path.addFirst(lowestPotencialShipment);
 
         //выкидываем элементы которые не имеют соседей по вертикали или горизонтали
@@ -195,7 +178,7 @@ public class TransportationProblem {
             return nbrs[0] == null || nbrs[1] == null;
         }));
 
-        // place the remaining elements in the correct plus-minus order
+        //сохрнаяем элементы
         Shipment[] stones = path.toArray(new Shipment[path.size()]);
         Shipment prev = lowestPotencialShipment;
         for (int i = 0; i < stones.length; i++) {
@@ -221,19 +204,88 @@ public class TransportationProblem {
         return nbrs;
     }
 
-    //составляем масив из бахи
 
     private static void optimize()
     {
 
+        LinkedList<Shipment>basicShipments = new LinkedList<Shipment>();
+
+
+        fixDegenerateCase();
+
+        //составляем матрицу из базисных элементов
+        for (int i = 0; i <matrix.length ; i++) {
+            for (int j = 0; j <matrix[i].length ; j++) {
+                /*matrix[i][j].refresh();*/
+                if(matrix[i][j].quantity > 0)
+                {
+                    basicShipments.add(matrix[i][j]);
+                }
+            }
+        }
+
+        HashMap<Integer, Integer> u = new HashMap<Integer, Integer>(supply.length);
+        HashMap<Integer, Integer> v = new HashMap<>(demand.length);
+
+        //считаем u и v для каждой базисной точки
+        u.put(0,0);
+        boolean flag = false;
+        for (int i = 0; i < basicShipments.size() ; i++) {
+            Shipment c = basicShipments.get(i);
+            //если u и v размером с supply и demand то выходим из цикла
+            if(u.size() == supply.length && v.size() == demand.length)
+            {
+                break;
+            }
+
+            //если у элемента есть и v и u или у элемента нет v и u то переходим к следующему элементу
+            if((v.get(c.columnID) != null && u.get(c.rowID) != null) || (v.get(c.columnID) == null && u.get(c.rowID) == null))
+            {
+                flag = true;
+                if(!(i == basicShipments.size()-1))
+                {
+                    continue;
+                }
+
+            }
+
+                if (v.get(c.columnID) == null) {
+                    v.put(c.columnID, c.costPerUnit - u.get(c.rowID));
+                } else if (u.get(c.rowID) == null) {
+                    u.put(c.rowID, c.costPerUnit - v.get(c.columnID));
+                }
+
+
+            //цикл продолжается до того момента как все v и u будут заполнены
+            if((i == basicShipments.size()-1) && flag)
+            {
+                i = 0;
+                flag = false;
+            }
+        }
+
+        //считаем потенциал для всех точек
+        for (int i = 0; i < matrix.length ; i++) {
+            for (int j = 0; j < matrix[i].length ; j++) {
+                matrix[i][j].setPotential(matrix[i][j].costPerUnit - u.get(matrix[i][j].rowID) - v.get(matrix[i][j].columnID));
+            }
+        }
+
+        lowestPotential();
+
         //ищем наименьшее количество товара для оптимизации
         int lowestQuantity = 999;
-        Shipment[] path = getClosePath();
+        Shipment[] path = getClosePath(basicShipments);
+        boolean sing1 = false;
         for (int i = 1; i < path.length ; i++) {
-            if (path[i].quantity < lowestQuantity)
+            if(!sing1)
             {
-                lowestQuantity = path[i].quantity;
+                if(path[i].quantity < lowestQuantity)
+                {
+                    lowestQuantity = path[i].quantity;
+                }
             }
+            sing1 = !sing1;
         }
 
         //Оптимизируем цикл
@@ -245,38 +297,13 @@ public class TransportationProblem {
             else matrix[path[i].rowID][path[i].columnID].setQuantity(matrix[path[i].rowID][path[i].columnID].getQuantity()-lowestQuantity);
             sign = !sign;
         }
-    }
 
-    public Integer[] getDemand() {
-        return demand;
-    }
-
-    public Integer[] getSuply() {
-        return supply;
-    }
-
-    public Integer[][] getCosts() {
-        return costs;
     }
 
     public String getResult() {
         return result;
     }
 
-    public static void main(String[] args) {
-        matrix = new Shipment[supply.length][demand.length];
-        northWest();
-        System.out.println(printResult());
-        isOptimal();
-        optimize();
-        System.out.println(printResult());
-        isOptimal();
-        optimize();
-        System.out.println(printResult());
-
-
-
-    }
 
 
 }

@@ -40,7 +40,6 @@ public class MainForm {
 
     MainForm()
     {
-        tp = new TransportationProblem();
         ///Отрисовка окна
         JFrame jFrame = new JFrame("Transhipment Problem");
 
@@ -127,29 +126,8 @@ public class MainForm {
                 }
 
 
-               /* String result = "";
-
-                result += "Запрос:\n";
-                for (int rowID = 0; rowID < requestData.length ; rowID++) {
-                    result += " " + requestData[rowID] + " ";
-                }
-                result += "\nЗапас:\n";
-                for (int rowID = 0; rowID < storeData.length; rowID++)
-                {
-                    result += " "+ storeData[rowID] + " ";
-                }
-                result += "\nСтоимость\n";
-
-                for (int rowID = 0; rowID < priceData.length ; rowID++) {
-                    for (int columnID = 0; columnID < priceData[rowID].length; columnID++) {
-                        result += priceData[rowID][columnID];
-                    }
-                    result += "\n";
-                }*/
-                tp.init();
-                /*tp.northWestCornerRule();
-                tp.steppingStone();*/
-                resultPane.setText(tp.getResult() + "\n\nOptimal solution:\n\n"+ tp.printResult());
+                tp = new TransportationProblem();
+                resultPane.setText(tp.getResult());
 
             }
         });
@@ -184,3 +162,4 @@ public class MainForm {
         return storeData;
     }
 }
+
